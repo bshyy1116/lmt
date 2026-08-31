@@ -19,6 +19,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
     
     <style>
+        html, body {
+            overscroll-behavior-y: none; /* 모바일 아래로 당겨서 새로고침(Pull-to-refresh) 방지 */
+            -webkit-overscroll-behavior-y: none;
+        }
         body { 
             font-family: 'Noto Sans KR', sans-serif; 
             background-color: #f8fafc; 
@@ -47,7 +51,11 @@
                 <p class="text-[10px] text-red-100">영업부점장 현장 정산 엔진</p>
             </div>
         </div>
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-1.5">
+            <!-- 새로고침 전용 버튼 -->
+            <button onclick="resetApp()" title="장표 초기화 및 새로고침" class="bg-white/20 active:bg-white/40 text-white p-2 rounded-lg text-xs font-bold flex items-center justify-center shadow">
+                <i class="fa-solid fa-rotate-right text-xs"></i>
+            </button>
             <button onclick="addRow()" class="bg-white/20 active:bg-white/40 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1">
                 <i class="fa-solid fa-plus text-[10px]"></i>
                 <span>상품추가</span>
@@ -125,23 +133,18 @@
                 promo: '7+1', 
                 mdDiscRate: 5, 
                 mdCash: 0, 
-                useCard: true,
+                useCard: true, 
                 cardDiscRate: 20, 
                 cardCash: 0, 
-                useLp: false,
-                lpDiscRate: 0,
-                lpCash: 0,
-                supportQty: 10,
-                isVoucherTarget: true,
-                voucherAmt: 0,
-                voucherMode: 'voucher'
+                useLp: false, 
+                lpDiscRate: 0, 
+                lpCash: 0, 
+                supportQty: 10, 
+                isVoucherTarget: true, 
+                voucherAmt: 0, 
+                voucherMode: 'voucher' 
             }
         ];
-
-        let globalVoucher = {
-            amt: 0,
-            mode: 'voucher'
-        };
 
         function floorTo10(amount) {
             return Math.floor(amount / 10) * 10;
@@ -159,10 +162,10 @@
             updateRow(index, field, parsed);
         }
 
-        function handleGlobalVoucherInput(input) {
-            const rawVal = input.value.replace(/,/g, '');
-            const parsed = parseFloat(rawVal) || 0;
-            updateGlobalVoucher('amt', parsed);
+        function resetApp() {
+            if (confirm('모든 입력 내용을 초기화하고 장표를 새로고침하시겠습니까?')) {
+                location.reload();
+            }
         }
 
         function renderApp() {
@@ -171,10 +174,9 @@
             container.innerHTML = '';
 
             let totalQty = 0;
-            let subtotalPayment = 0; 
+            let totalFinalPaymentSum = 0;
+            let totalVoucherSum = 0;
             let voucherTargetTotal = 0;
-            let itemizedListHTML = '';
-            const isMultiItem = rows.length >= 2;
 
             rows.forEach((r, index) => {
                 totalQty += r.qty;
@@ -190,7 +192,7 @@
                 const billingQty = r.qty - bonusQty;
                 const normalCalc = r.orig * billingQty;
 
-                // 2. MD신가 계산
+                // 2. MD신가 계산 (MD신가 시에만 1원 단위 절삭)
                 let mdUnitPrice = r.orig;
                 if (r.mdDiscRate > 0) {
                     mdUnitPrice = floorTo10(r.orig * (1 - r.mdDiscRate / 100));
@@ -220,30 +222,28 @@
 
                 const finalAppliedUnitPrice = (r.useCard || r.useLp) ? Math.round(lpUnitPrice) : floorTo10(lpUnitPrice);
 
-                // 5. 고객 결제액 산출
+                // 5. 기본 고객 결제액 산출 (1원 단위 절삭)
                 let itemPayment = floorTo10(lpUnitPrice * billingQty);
-                subtotalPayment += itemPayment;
 
                 if (r.isVoucherTarget) {
                     voucherTargetTotal += itemPayment;
                 }
 
-                const totalReceiveQty = r.qty + r.supportQty;
-                const unitPricePerItem = totalReceiveQty > 0 ? Math.round(itemPayment / totalReceiveQty) : 0;
-
+                // 즉시 할인 적용 여부에 따른 개별 상품 최종 결제액 및 개당 단가 산정
                 let itemNetPayment = itemPayment;
-                if (!isMultiItem && r.voucherMode === 'instant' && r.voucherAmt > 0) {
+                if (r.voucherMode === 'instant' && r.voucherAmt > 0) {
                     itemNetPayment = floorTo10(Math.max(0, itemPayment - r.voucherAmt));
                 }
+                totalFinalPaymentSum += itemNetPayment;
 
-                itemizedListHTML += `
-                <div class="flex justify-between items-center text-xs py-1.5 border-b border-slate-100">
-                    <span class="font-bold text-slate-800 truncate max-w-[140px]">${r.name || '상품명 미입력'}</span>
-                    <span class="text-slate-600 font-medium">${formatComma(totalReceiveQty)}개</span>
-                    <span class="font-bold text-slate-900">${itemPayment.toLocaleString()}원</span>
-                </div>
-                `;
+                if (r.voucherAmt > 0) {
+                    totalVoucherSum += r.voucherAmt;
+                }
 
+                const totalReceiveQty = r.qty + r.supportQty;
+                const unitPricePerItem = totalReceiveQty > 0 ? Math.round(itemNetPayment / totalReceiveQty) : 0;
+
+                // 모든 상품 카드에 개별 상품권 증정 금액 입력란 및 혜택 방식 유지
                 container.innerHTML += `
                 <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3 relative">
                     <div class="flex justify-between items-center space-x-2">
@@ -363,6 +363,7 @@
                         </div>
                     </div>
 
+                    <!-- 최종 결제액 및 각 상품별 상품권/즉시할인 설정 영역 -->
                     <div class="bg-red-50/70 border border-red-100 p-3 rounded-xl space-y-2 text-xs">
                         <div class="flex justify-between items-center">
                             <div>
@@ -372,7 +373,6 @@
                             <span class="font-black text-red-600 text-base">${itemNetPayment.toLocaleString()}원</span>
                         </div>
 
-                        ${!isMultiItem ? `
                         <div class="pt-2 border-t border-red-200/60 space-y-2">
                             <div class="flex items-center justify-between">
                                 <span class="font-bold text-slate-700">상품권 증정 금액 입력</span>
@@ -395,86 +395,10 @@
                                 </div>
                             </div>
                         </div>
-                        ` : ''}
                     </div>
                 </div>
                 `;
             });
-
-            let finalPayment = subtotalPayment;
-            let displayVoucherAmt = 0;
-
-            if (isMultiItem) {
-                displayVoucherAmt = globalVoucher.amt;
-                if (globalVoucher.mode === 'instant' && globalVoucher.amt > 0) {
-                    finalPayment = floorTo10(Math.max(0, subtotalPayment - globalVoucher.amt));
-                }
-            } else {
-                if (rows.length > 0) {
-                    displayVoucherAmt = rows[0].voucherAmt || 0;
-                    if (rows[0].voucherMode === 'instant' && rows[0].voucherAmt > 0) {
-                        finalPayment = floorTo10(Math.max(0, subtotalPayment - rows[0].voucherAmt));
-                    }
-                }
-            }
-
-            if (isMultiItem) {
-                container.innerHTML += `
-                <div class="bg-gradient-to-br from-red-50 to-amber-50 rounded-2xl p-4 shadow-md border-2 border-red-200 space-y-3 mt-4">
-                    <div class="flex items-center justify-between border-b border-red-200 pb-2">
-                        <span class="font-black text-slate-900 text-sm flex items-center">
-                            <i class="fa-solid fa-calculator text-[#E60012] mr-1.5"></i>견적 총괄 요약 및 상품권 설정
-                        </span>
-                        <span class="text-[11px] bg-red-600 text-white px-2 py-0.5 rounded-full font-bold">2개 이상 통합 정산</span>
-                    </div>
-
-                    <div class="bg-white p-3 rounded-xl border border-red-100 space-y-2 text-xs">
-                        <p class="font-bold text-slate-700 border-b pb-1">🛒 선택 상품 리스트 (상품명 / 수량 / 금액)</p>
-                        <div class="space-y-1 my-1">
-                            ${itemizedListHTML}
-                        </div>
-                        <div class="flex justify-between items-center pt-2 border-t font-black text-slate-900 text-sm">
-                            <span>계 (총 합계액):</span>
-                            <span class="text-red-600">${subtotalPayment.toLocaleString()}원</span>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-2 text-xs bg-white/80 p-3 rounded-xl border border-red-100 items-center">
-                        <div>
-                            <span class="text-slate-500 text-[10px] block">최종 고객 결제 총액</span>
-                            <span class="font-black text-red-600 text-base">${finalPayment.toLocaleString()}원</span>
-                        </div>
-                        <div class="text-right">
-                            <span class="text-slate-500 text-[10px] block">예상 상품권 혜택</span>
-                            <span class="font-bold text-amber-700 text-sm">${globalVoucher.amt.toLocaleString()}원</span>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-3 rounded-xl border border-red-200 space-y-2.5 text-xs shadow-sm">
-                        <div class="flex items-center justify-between">
-                            <span class="font-bold text-slate-800">상품권 증정 금액 입력</span>
-                            <div class="relative w-40">
-                                <input type="text" inputmode="numeric" value="${formatComma(globalVoucher.amt)}" oninput="this.value = this.value.replace(/[^0-9]/g, '').replace(/\\B(?=(\\d{3})+(?!\\d))/g, ',')" onchange="handleGlobalVoucherInput(this)" placeholder="0" class="w-full bg-slate-50 border border-red-200 rounded pl-2 pr-7 py-1 text-right font-black text-amber-700 text-sm">
-                                <span class="absolute right-2 top-1 text-xs text-slate-500 font-bold pointer-events-none">원</span>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between bg-amber-50/50 p-2 rounded-lg border border-amber-200">
-                            <span class="font-medium text-slate-700">혜택 적용 방식</span>
-                            <div class="flex space-x-3 text-xs font-bold">
-                                <label class="flex items-center space-x-1 cursor-pointer">
-                                    <input type="radio" name="globalVoucherMode" ${globalVoucher.mode === 'voucher' ? 'checked' : ''} onchange="updateGlobalVoucher('mode', 'voucher')" class="accent-red-600">
-                                    <span>상품권 수령</span>
-                                </label>
-                                <label class="flex items-center space-x-1 cursor-pointer">
-                                    <input type="radio" name="globalVoucherMode" ${globalVoucher.mode === 'instant' ? 'checked' : ''} onchange="updateGlobalVoucher('mode', 'instant')" class="accent-red-600">
-                                    <span class="text-red-700">즉시 할인 적용</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                `;
-            }
 
             const countElem = document.getElementById('footer-count');
             const qtyElem = document.getElementById('footer-qty');
@@ -485,8 +409,8 @@
             if (countElem) countElem.innerText = rows.length;
             if (qtyElem) qtyElem.innerText = formatComma(totalQty);
             if (voucherTargetElem) voucherTargetElem.innerText = voucherTargetTotal.toLocaleString() + '원';
-            if (voucherAmtElem) voucherAmtElem.innerText = displayVoucherAmt.toLocaleString() + '원';
-            if (totalElem) totalElem.innerText = finalPayment.toLocaleString() + '원';
+            if (voucherAmtElem) voucherAmtElem.innerText = totalVoucherSum.toLocaleString() + '원';
+            if (totalElem) totalElem.innerText = totalFinalPaymentSum.toLocaleString() + '원';
         }
 
         function updateRow(index, field, value) {
@@ -500,17 +424,25 @@
             renderApp();
         }
 
-        function updateGlobalVoucher(field, value) {
-            if (field === 'amt') {
-                globalVoucher.amt = parseFloat(value) || 0;
-            } else if (field === 'mode') {
-                globalVoucher.mode = value;
-            }
-            renderApp();
-        }
-
         function addRow() {
-            rows.unshift({ name: '', orig: 0, qty: 1, promo: '0', mdDiscRate: 0, mdCash: 0, useCard: false, cardDiscRate: 0, cardCash: 0, useLp: false, lpDiscRate: 0, lpCash: 0, supportQty: 0, isVoucherTarget: true, voucherAmt: 0, voucherMode: 'voucher' });
+            rows.unshift({ 
+                name: '', 
+                orig: 0, 
+                qty: 1, 
+                promo: '0', 
+                mdDiscRate: 0, 
+                mdCash: 0, 
+                useCard: false, 
+                cardDiscRate: 0, 
+                cardCash: 0, 
+                useLp: false, 
+                lpDiscRate: 0, 
+                lpCash: 0, 
+                supportQty: 0, 
+                isVoucherTarget: true, 
+                voucherAmt: 0, 
+                voucherMode: 'voucher' 
+            });
             renderApp();
         }
 
@@ -525,9 +457,8 @@
             listContainer.innerHTML = '';
             let origSum = 0;
             let discSum = 0;
-            let subtotal = 0;
-            let voucherTargetTotal = 0;
-            const isMultiItem = rows.length >= 2;
+            let grandSum = 0;
+            let voucherSumTotal = 0;
 
             rows.forEach((r, i) => {
                 let bonusQty = r.promo !== '0' ? Math.floor(r.qty / (parseInt(r.promo.split('+')[0]) + parseInt(r.promo.split('+')[1]))) * parseInt(r.promo.split('+')[1]) : 0;
@@ -553,21 +484,20 @@
                 const finalAmt = floorTo10(lpUnitPrice * billingQty);
                 const totalReceiveQty = r.qty + r.supportQty;
 
-                origSum += origAmt;
-                subtotal += finalAmt;
-
-                if (r.isVoucherTarget) voucherTargetTotal += finalAmt;
-
                 let itemNet = finalAmt;
-                if (!isMultiItem && r.voucherMode === 'instant' && r.voucherAmt > 0) {
+                if (r.voucherMode === 'instant' && r.voucherAmt > 0) {
                     itemNet = floorTo10(Math.max(0, finalAmt - r.voucherAmt));
                 }
+
+                origSum += origAmt;
+                grandSum += itemNet;
+                voucherSumTotal += (r.voucherAmt || 0);
 
                 listContainer.innerHTML += `
                 <div class="flex justify-between border-b border-slate-100 py-1.5 items-center">
                     <div>
                         <b>${i+1}. ${r.name || '상품명 미입력'}</b> 
-                        <span class="text-slate-500 text-[11px] block">총 구매 수량: <b>${formatComma(totalReceiveQty)}개</b></span>
+                        <span class="text-slate-500 text-[11px] block">총 구매 수량: <b>${formatComma(totalReceiveQty)}개</b> ${r.voucherMode==='instant' && r.voucherAmt>0 ? '(즉시할인 적용됨)' : ''}</span>
                     </div>
                     <div class="text-right">
                         <b class="text-slate-900">${itemNet.toLocaleString()}원</b>
@@ -577,13 +507,6 @@
                 `;
             });
 
-            let grandSum = subtotal;
-            let vAmt = isMultiItem ? globalVoucher.amt : (rows.length > 0 ? (rows[0].voucherAmt || 0) : 0);
-            let mode = isMultiItem ? globalVoucher.mode : (rows.length > 0 ? rows[0].voucherMode : 'voucher');
-
-            if (mode === 'instant' && vAmt > 0) {
-                grandSum = floorTo10(Math.max(0, subtotal - vAmt));
-            }
             discSum = origSum - grandSum;
 
             const origSumElem = document.getElementById('print-orig-sum');
@@ -594,7 +517,7 @@
 
             if (origSumElem) origSumElem.innerText = origSum.toLocaleString() + '원';
             if (discSumElem) discSumElem.innerText = '-' + discSum.toLocaleString() + '원';
-            if (voucherSumElem) voucherSumElem.innerText = vAmt.toLocaleString() + '원';
+            if (voucherSumElem) voucherSumElem.innerText = voucherSumTotal.toLocaleString() + '원';
             if (grandSumElem) grandSumElem.innerText = grandSum.toLocaleString() + '원';
             if (printModal) printModal.classList.remove('hidden');
         }
