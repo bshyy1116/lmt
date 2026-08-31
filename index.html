@@ -20,7 +20,7 @@
     
     <style>
         html, body {
-            overscroll-behavior-y: none; /* 모바일 아래로 당겨서 새로고침(Pull-to-refresh) 방지 */
+            overscroll-behavior-y: none;
             -webkit-overscroll-behavior-y: none;
         }
         body { 
@@ -29,8 +29,9 @@
             -webkit-tap-highlight-color: transparent; 
             -webkit-text-size-adjust: 100%;
         }
+        /* 하단 고정 바 가림 방지를 위한 충분한 여백 확보 */
         .ios-pb-fix {
-            padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 120px);
+            padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 180px) !important;
         }
         @media print {
             body * { visibility: hidden; }
@@ -52,7 +53,7 @@
             </div>
         </div>
         <div class="flex items-center space-x-1.5">
-            <!-- 새로고침 전용 버튼 -->
+            <!-- 새로고침 버튼 -->
             <button onclick="resetApp()" title="장표 초기화 및 새로고침" class="bg-white/20 active:bg-white/40 text-white p-2 rounded-lg text-xs font-bold flex items-center justify-center shadow">
                 <i class="fa-solid fa-rotate-right text-xs"></i>
             </button>
@@ -85,7 +86,7 @@
         <!-- Dynamic Cards -->
     </main>
 
-    <!-- Bottom Sticky Summary Bar -->
+    <!-- Bottom Sticky Summary Bar (z-index 조정 및 하단 여백 보정) -->
     <footer class="bg-slate-900 text-white p-4 fixed bottom-0 left-0 right-0 z-20 shadow-2xl border-t border-slate-800 flex justify-between items-center" style="padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem));">
         <div>
             <p class="text-[11px] text-slate-400">총 상품수: <b id="footer-count" class="text-white">0</b>개 | 주문수량: <b id="footer-qty" class="text-yellow-400">0</b>개 | 상품권 대상액: <b id="footer-voucher-target" class="text-yellow-400">0원</b></p>
@@ -192,7 +193,7 @@
                 const billingQty = r.qty - bonusQty;
                 const normalCalc = r.orig * billingQty;
 
-                // 2. MD신가 계산 (MD신가 시에만 1원 단위 절삭)
+                // 2. MD신가 계산 (MD신가 적용 시 1원 단위 절삭)
                 let mdUnitPrice = r.orig;
                 if (r.mdDiscRate > 0) {
                     mdUnitPrice = floorTo10(r.orig * (1 - r.mdDiscRate / 100));
@@ -243,9 +244,8 @@
                 const totalReceiveQty = r.qty + r.supportQty;
                 const unitPricePerItem = totalReceiveQty > 0 ? Math.round(itemNetPayment / totalReceiveQty) : 0;
 
-                // 모든 상품 카드에 개별 상품권 증정 금액 입력란 및 혜택 방식 유지
                 container.innerHTML += `
-                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3 relative">
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3 relative mb-3">
                     <div class="flex justify-between items-center space-x-2">
                         <input type="text" value="${r.name}" onchange="updateRow(${index}, 'name', this.value)" placeholder="상품명을 입력하세요" class="font-bold text-slate-900 text-sm w-full border-b border-slate-200 focus:border-red-500 outline-none pb-1">
                         <label class="flex items-center space-x-1 whitespace-nowrap bg-amber-50 border border-amber-200 px-2 py-1 rounded-lg text-[11px] font-bold text-amber-800 cursor-pointer">
@@ -363,8 +363,8 @@
                         </div>
                     </div>
 
-                    <!-- 최종 결제액 및 각 상품별 상품권/즉시할인 설정 영역 -->
-                    <div class="bg-red-50/70 border border-red-100 p-3 rounded-xl space-y-2 text-xs">
+                    <!-- 최종 결제액 및 상품권/즉시할인 설정 영역 -->
+                    <div class="bg-red-50/70 border border-red-100 p-3 rounded-xl space-y-2.5 text-xs">
                         <div class="flex justify-between items-center">
                             <div>
                                 <span class="text-slate-600 font-medium block">최종 고객 결제액</span>
