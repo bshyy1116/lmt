@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>2026 롯데마트 추석 선물세트 견적 산출 장표</title>
+    <title>2026 롯데마트 서울역점 추석 선물세트 견적 산출 장표</title>
     
     <!-- PWA Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="롯데마트 견적">
+    <meta name="apple-mobile-web-app-title" content="롯데마트 서울역점">
     <meta name="theme-color" content="#E60012">
 
     <!-- Tailwind CSS -->
@@ -29,7 +29,6 @@
             -webkit-tap-highlight-color: transparent; 
             -webkit-text-size-adjust: 100%;
         }
-        /* 하단 고정 바 가림 방지를 위한 충분한 여백 확보 */
         .ios-pb-fix {
             padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 180px) !important;
         }
@@ -49,7 +48,7 @@
             <div class="bg-white rounded-md px-1.5 py-0.5 text-[#E60012] font-black text-sm tracking-tighter">LOTTE</div>
             <div>
                 <h1 class="font-bold text-sm tracking-tight">선물Set 견적 산출 장표</h1>
-                <p class="text-[10px] text-red-100">영업부점장 현장 정산 엔진</p>
+                <p class="text-[10px] text-red-100">롯데마트 서울역점 현장 정산 엔진</p>
             </div>
         </div>
         <div class="flex items-center space-x-1.5">
@@ -86,7 +85,7 @@
         <!-- Dynamic Cards -->
     </main>
 
-    <!-- Bottom Sticky Summary Bar (z-index 조정 및 하단 여백 보정) -->
+    <!-- Bottom Sticky Summary Bar -->
     <footer class="bg-slate-900 text-white p-4 fixed bottom-0 left-0 right-0 z-20 shadow-2xl border-t border-slate-800 flex justify-between items-center" style="padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem));">
         <div>
             <p class="text-[11px] text-slate-400">총 상품수: <b id="footer-count" class="text-white">0</b>개 | 주문수량: <b id="footer-qty" class="text-yellow-400">0</b>개 | 상품권 대상액: <b id="footer-voucher-target" class="text-yellow-400">0원</b></p>
@@ -107,7 +106,7 @@
             <div class="flex-grow overflow-y-auto p-5 space-y-4" id="print-area">
                 <div class="text-center border-b border-slate-200 pb-3">
                     <h3 class="text-lg font-black underline underline-offset-4">2026년 설/추석 선물세트 견적서</h3>
-                    <p class="text-[11px] text-slate-500 mt-1">롯데마트 영업부점장 현장 발송용 장표</p>
+                    <p class="text-[11px] text-slate-500 mt-1">롯데마트 서울역점 현장 발송용 장표</p>
                 </div>
                 <div id="print-item-list" class="space-y-2 text-xs"></div>
                 <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-2 font-bold">
@@ -193,7 +192,7 @@
                 const billingQty = r.qty - bonusQty;
                 const normalCalc = r.orig * billingQty;
 
-                // 2. MD신가 계산 (MD신가 적용 시 1원 단위 절삭)
+                // 2. MD신가 계산 (MD신가 시에만 1원 단위 절삭)
                 let mdUnitPrice = r.orig;
                 if (r.mdDiscRate > 0) {
                     mdUnitPrice = floorTo10(r.orig * (1 - r.mdDiscRate / 100));
@@ -237,7 +236,8 @@
                 }
                 totalFinalPaymentSum += itemNetPayment;
 
-                if (r.voucherAmt > 0) {
+                // 상품권 수령 모드일 때만 예상 상품권 합계에 반영
+                if (r.voucherMode === 'voucher' && r.voucherAmt > 0) {
                     totalVoucherSum += r.voucherAmt;
                 }
 
@@ -491,13 +491,17 @@
 
                 origSum += origAmt;
                 grandSum += itemNet;
-                voucherSumTotal += (r.voucherAmt || 0);
+
+                // 상품권 수령일 때만 증정예상 상품권에 누적
+                if (r.voucherMode === 'voucher' && r.voucherAmt > 0) {
+                    voucherSumTotal += r.voucherAmt;
+                }
 
                 listContainer.innerHTML += `
                 <div class="flex justify-between border-b border-slate-100 py-1.5 items-center">
                     <div>
                         <b>${i+1}. ${r.name || '상품명 미입력'}</b> 
-                        <span class="text-slate-500 text-[11px] block">총 구매 수량: <b>${formatComma(totalReceiveQty)}개</b> ${r.voucherMode==='instant' && r.voucherAmt>0 ? '(즉시할인 적용됨)' : ''}</span>
+                        <span class="text-slate-500 text-[11px] block">총 구매 수량: <b>${formatComma(totalReceiveQty)}개</b> ${r.voucherMode==='instant' && r.voucherAmt>0 ? '(상품권 즉시할인 적용됨)' : ''}</span>
                     </div>
                     <div class="text-right">
                         <b class="text-slate-900">${itemNet.toLocaleString()}원</b>
