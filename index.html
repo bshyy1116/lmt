@@ -33,17 +33,56 @@
             padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 180px) !important;
         }
         @media print {
-            body * { visibility: hidden; }
-            #print-area, #print-area * { visibility: visible; }
-            #print-area { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 20px; }
-            .no-print { display: none !important; }
+            @page {
+                size: A4 portrait;
+                margin: 10mm;
+            }
+            html, body {
+                background: white !important;
+                height: auto !important;
+                overflow: visible !important;
+            }
+            body * { 
+                visibility: hidden !important; 
+            }
+            #print-modal, #print-modal * { 
+                visibility: visible !important; 
+            }
+            #print-modal { 
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                height: auto !important;
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+            #print-modal > div {
+                max-width: 100% !important;
+                width: 100% !important;
+                height: auto !important;
+                box-shadow: none !important;
+                border: none !important;
+                border-radius: 0 !important;
+                padding: 0 !important;
+            }
+            #print-area {
+                overflow: visible !important;
+                padding: 0 !important;
+                height: auto !important;
+            }
+            .no-print { 
+                display: none !important; 
+            }
         }
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-800">
 
     <!-- Top App Header -->
-    <header class="bg-[#E60012] text-white px-4 py-3 sticky top-0 z-30 shadow-md flex items-center justify-between">
+    <header class="bg-[#E60012] text-white px-4 py-3 sticky top-0 z-30 shadow-md flex items-center justify-between no-print">
         <div class="flex items-center space-x-2">
             <div class="bg-white rounded-md px-1.5 py-0.5 text-[#E60012] font-black text-sm tracking-tighter">LOTTE</div>
             <div>
@@ -68,7 +107,7 @@
     </header>
 
     <!-- Pre-order Period Selector Bar -->
-    <div class="bg-slate-900 text-white px-4 py-3 sticky top-[53px] z-20 shadow-md flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
+    <div class="bg-slate-900 text-white px-4 py-3 sticky top-[53px] z-20 shadow-md flex flex-col sm:flex-row items-center justify-between gap-2 text-xs no-print">
         <div class="flex items-center space-x-2">
             <span class="bg-yellow-400 text-slate-900 font-black px-2 py-0.5 rounded text-[11px]">사전예약 차수 선택</span>
             <span class="text-slate-300 font-medium">구매금액대별 상품권/즉시할인 자동 적용</span>
@@ -81,12 +120,12 @@
     </div>
 
     <!-- App Body (Card List) -->
-    <main class="p-3 flex-grow space-y-3 ios-pb-fix" id="app-card-list">
+    <main class="p-3 flex-grow space-y-3 ios-pb-fix no-print" id="app-card-list">
         <!-- Dynamic Cards -->
     </main>
 
     <!-- Bottom Sticky Summary Bar -->
-    <footer class="bg-slate-900 text-white p-4 fixed bottom-0 left-0 right-0 z-20 shadow-2xl border-t border-slate-800 flex justify-between items-center" style="padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem));">
+    <footer class="bg-slate-900 text-white p-4 fixed bottom-0 left-0 right-0 z-20 shadow-2xl border-t border-slate-800 flex justify-between items-center no-print" style="padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem));">
         <div>
             <p class="text-[11px] text-slate-400">총 상품수: <b id="footer-count" class="text-white">0</b>개 | 주문수량: <b id="footer-qty" class="text-yellow-400">0</b>개 | 상품권 대상액: <b id="footer-voucher-target" class="text-yellow-400">0원</b></p>
             <p class="text-xs font-bold text-slate-300">최종 결제액 (예상 상품권: <span id="footer-voucher-amt" class="text-emerald-400 font-black">0원</span>)</p>
@@ -99,7 +138,7 @@
     <!-- Official Print / Quote Modal -->
     <div id="print-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center hidden p-2">
         <div class="bg-white w-full sm:max-w-2xl rounded-t-3xl sm:rounded-2xl h-[90vh] flex flex-col shadow-2xl overflow-hidden">
-            <div class="px-5 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+            <div class="px-5 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 no-print">
                 <h2 class="font-bold text-base text-slate-900"><i class="fa-solid fa-file-lines text-[#E60012] mr-2"></i>견적서 요약</h2>
                 <button onclick="closePrintModal()" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">&times;</button>
             </div>
@@ -112,11 +151,12 @@
                 <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-2 font-bold">
                     <div class="flex justify-between"><span>정상매가 총액:</span> <span id="print-orig-sum" class="font-normal">0원</span></div>
                     <div class="flex justify-between text-red-600"><span>총 할인액:</span> <span id="print-disc-sum">-0원</span></div>
-                    <div class="flex justify-between text-yellow-700"><span>증정예상 상품권:</span> <span id="print-voucher-sum">0원</span></div>
+                    <!-- 상품권 수령 시에만 표시되는 증정예상 상품권 행 -->
+                    <div id="print-voucher-row" class="flex justify-between text-yellow-700"><span>증정예상 상품권:</span> <span id="print-voucher-sum">0원</span></div>
                     <div class="flex justify-between text-base pt-2 border-t border-slate-200 text-emerald-700"><span>최종 고객 결제 총액:</span> <span id="print-grand-sum">0원</span></div>
                 </div>
             </div>
-            <div class="p-4 border-t border-slate-200 bg-slate-50 flex space-x-2">
+            <div class="p-4 border-t border-slate-200 bg-slate-50 flex space-x-2 no-print">
                 <button onclick="closePrintModal()" class="w-1/2 py-3 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold">닫기</button>
                 <button onclick="window.print()" class="w-1/2 py-3 bg-[#E60012] text-white rounded-xl text-xs font-bold shadow"><i class="fa-solid fa-print mr-1"></i>인쇄 / PDF 저장</button>
             </div>
@@ -515,13 +555,24 @@
 
             const origSumElem = document.getElementById('print-orig-sum');
             const discSumElem = document.getElementById('print-disc-sum');
+            const voucherRowElem = document.getElementById('print-voucher-row');
             const voucherSumElem = document.getElementById('print-voucher-sum');
             const grandSumElem = document.getElementById('print-grand-sum');
             const printModal = document.getElementById('print-modal');
 
             if (origSumElem) origSumElem.innerText = origSum.toLocaleString() + '원';
             if (discSumElem) discSumElem.innerText = '-' + discSum.toLocaleString() + '원';
-            if (voucherSumElem) voucherSumElem.innerText = voucherSumTotal.toLocaleString() + '원';
+            
+            // 상품권 수령 금액이 0원 초과일 때만 행 노출, 즉시할인만 적용되어 0원인 경우 행 숨김
+            if (voucherRowElem) {
+                if (voucherSumTotal > 0) {
+                    voucherRowElem.style.display = 'flex';
+                    if (voucherSumElem) voucherSumElem.innerText = voucherSumTotal.toLocaleString() + '원';
+                } else {
+                    voucherRowElem.style.display = 'none';
+                }
+            }
+            
             if (grandSumElem) grandSumElem.innerText = grandSum.toLocaleString() + '원';
             if (printModal) printModal.classList.remove('hidden');
         }
