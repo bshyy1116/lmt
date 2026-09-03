@@ -33,7 +33,7 @@
             padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 180px) !important;
         }
 
-        /* 2개 이상 상품 전체가 잘림 없이 인쇄/PDF 저장되도록 개선된 전용 스타일 */
+        /* 인쇄/PDF 전용: A4 1장당 상품 장표 2개씩 최적화 */
         @media print {
             @page {
                 size: A4 portrait;
@@ -81,18 +81,22 @@
                 overflow: visible !important;
                 display: block !important;
             }
-            .print-page {
+            /* 요약 장표는 단독 1장 사용 */
+            .summary-page {
                 page-break-after: always !important;
                 break-after: page !important;
-                min-height: 250mm !important;
-                box-sizing: border-box !important;
-                margin-bottom: 20px !important;
-                border: 1px solid #e2e8f0 !important;
+                margin-bottom: 10mm !important;
             }
-            .print-page:last-child {
-                page-break-after: avoid !important;
-                break-after: avoid !important;
-                margin-bottom: 0 !important;
+            /* 개별 상품 장표: 절반 높이(132mm)로 지정하여 1장에 2개씩 쏙 들어가게 함 */
+            .print-page {
+                page-break-after: auto !important;
+                break-after: auto !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                height: 132mm !important; 
+                box-sizing: border-box !important;
+                margin-bottom: 8mm !important;
+                border: 1px solid #e2e8f0 !important;
             }
             .no-print { 
                 display: none !important; 
@@ -103,36 +107,36 @@
 <body class="min-h-screen flex flex-col justify-between text-slate-800">
 
     <!-- Top App Header -->
-    <header class="bg-[#E60012] text-white px-4 py-3 sticky top-0 z-30 shadow-md flex items-center justify-between no-print">
-        <div class="flex items-center space-x-2">
-            <div class="bg-white rounded-md px-1.5 py-0.5 text-[#E60012] font-black text-sm tracking-tighter">LOTTE</div>
-            <div>
-                <h1 class="font-bold text-sm tracking-tight">선물Set 견적 산출 장표</h1>
-                <p class="text-[10px] text-red-100">롯데마트 서울역점 현장 정산 엔진</p>
+    <header class="bg-[#E60012] text-white px-2 sm:px-4 py-2.5 sm:py-3 sticky top-0 z-30 shadow-md flex items-center justify-between no-print gap-1 overflow-hidden">
+        <div class="flex items-center space-x-1.5 sm:space-x-2 shrink max-w-[60%]">
+            <div class="bg-white rounded-md px-1 sm:px-1.5 py-0.5 text-[#E60012] font-black text-[10px] sm:text-sm tracking-tighter shrink-0">LOTTE</div>
+            <div class="whitespace-nowrap overflow-hidden text-ellipsis shrink">
+                <h1 class="font-bold text-[12px] sm:text-sm tracking-tight leading-tight truncate">선물Set 견적 산출 장표</h1>
+                <p class="text-[9px] sm:text-[10px] text-red-100 leading-tight truncate">롯데마트 서울역점 현장 정산 엔진</p>
             </div>
         </div>
-        <div class="flex items-center space-x-1.5">
-            <button onclick="resetApp()" title="장표 초기화 및 새로고침" class="bg-white/20 active:bg-white/40 text-white p-2 rounded-lg text-xs font-bold flex items-center justify-center shadow">
-                <i class="fa-solid fa-rotate-right text-xs"></i>
+        <div class="flex items-center space-x-1 sm:space-x-1.5 shrink-0">
+            <button onclick="resetApp()" title="장표 초기화 및 새로고침" class="bg-white/20 active:bg-white/40 text-white p-1.5 sm:p-2 rounded-md sm:rounded-lg text-xs font-bold flex items-center justify-center shadow">
+                <i class="fa-solid fa-rotate-right text-[10px] sm:text-xs"></i>
             </button>
-            <button onclick="addRow()" class="bg-white/20 active:bg-white/40 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1">
-                <i class="fa-solid fa-plus text-[10px]"></i>
+            <button onclick="addRow()" class="bg-white/20 active:bg-white/40 text-white px-1.5 sm:px-2.5 py-1.5 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-bold flex items-center space-x-1 whitespace-nowrap">
+                <i class="fa-solid fa-plus text-[8px] sm:text-[10px]"></i>
                 <span>상품추가</span>
             </button>
-            <button onclick="openPrintModal()" class="bg-yellow-400 active:bg-yellow-500 text-slate-900 px-2.5 py-1.5 rounded-lg text-xs font-black flex items-center space-x-1 shadow">
-                <i class="fa-solid fa-file-lines text-[10px]"></i>
+            <button onclick="openPrintModal()" class="bg-yellow-400 active:bg-yellow-500 text-slate-900 px-1.5 sm:px-2.5 py-1.5 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-black flex items-center space-x-1 shadow whitespace-nowrap">
+                <i class="fa-solid fa-file-lines text-[8px] sm:text-[10px]"></i>
                 <span>견적서</span>
             </button>
         </div>
     </header>
 
     <!-- Pre-order Period Selector Bar -->
-    <div class="bg-slate-900 text-white px-4 py-3 sticky top-[53px] z-20 shadow-md flex flex-col sm:flex-row items-center justify-between gap-2 text-xs no-print">
+    <div class="bg-slate-900 text-white px-4 py-3 sticky top-[48px] sm:top-[53px] z-20 shadow-md flex flex-col sm:flex-row items-center justify-between gap-2 text-xs no-print">
         <div class="flex items-center space-x-2">
             <span class="bg-yellow-400 text-slate-900 font-black px-2 py-0.5 rounded text-[11px]">사전예약 차수 선택</span>
             <span class="text-slate-300 font-medium">구매금액대별 상품권/즉시할인 자동 적용</span>
         </div>
-        <select id="promo-period" onchange="renderApp()" class="bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-1.5 outline-none focus:border-red-500 font-bold text-xs">
+        <select id="promo-period" onchange="renderApp()" class="bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-1.5 outline-none focus:border-red-500 font-bold text-xs w-full sm:w-auto">
             <option value="1">1차 사전예약 (8/6 ~ 9/4) - 최대 1,200만원</option>
             <option value="2">2차 사전예약 (9/5 ~ 9/11) - 최대 800만원</option>
             <option value="3">3차 사전예약 (9/12 ~ 9/16) - 최대 500만원</option>
@@ -158,19 +162,19 @@
     <!-- Official Print / Quote Modal -->
     <div id="print-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center hidden p-2">
         <div class="bg-white w-full sm:max-w-2xl rounded-t-3xl sm:rounded-2xl h-[92vh] flex flex-col shadow-2xl overflow-hidden">
-            <div class="px-5 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 no-print">
-                <h2 class="font-bold text-base text-slate-900"><i class="fa-solid fa-file-lines text-[#E60012] mr-2"></i>견적 산출 상세 장표 미리보기</h2>
-                <button onclick="closePrintModal()" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">&times;</button>
+            <div class="px-4 py-3 border-b border-slate-200 flex justify-between items-center bg-slate-50 no-print shrink-0">
+                <h2 class="font-bold text-sm sm:text-base text-slate-900"><i class="fa-solid fa-file-lines text-[#E60012] mr-2"></i>견적 산출 장표 미리보기</h2>
+                <button onclick="closePrintModal()" class="text-slate-400 hover:text-slate-700 text-xl leading-none">&times;</button>
             </div>
             
             <!-- 인쇄 및 PDF 저장 영역 -->
-            <div class="flex-grow overflow-y-auto p-4 sm:p-6 space-y-6 bg-slate-50/50" id="print-area">
-                <!-- 상품별 1장씩 동적 생성 -->
+            <div class="flex-grow overflow-y-auto p-3 sm:p-5 space-y-4 bg-slate-100" id="print-area">
+                <!-- 요약 페이지 + 상품별 카드 동적 생성 -->
             </div>
 
-            <div class="p-4 border-t border-slate-200 bg-slate-50 flex space-x-2 no-print">
-                <button onclick="closePrintModal()" class="w-1/2 py-3 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold">닫기</button>
-                <button onclick="window.print()" class="w-1/2 py-3 bg-[#E60012] text-white rounded-xl text-xs font-bold shadow"><i class="fa-solid fa-print mr-1"></i>인쇄 / PDF 저장 (전체 상품 각 1장)</button>
+            <div class="p-3 border-t border-slate-200 bg-slate-50 flex space-x-2 no-print shrink-0">
+                <button onclick="closePrintModal()" class="w-1/3 py-2.5 bg-slate-200 text-slate-700 rounded-lg text-xs font-bold">닫기</button>
+                <button onclick="window.print()" class="w-2/3 py-2.5 bg-[#E60012] text-white rounded-lg text-xs font-bold shadow"><i class="fa-solid fa-print mr-1"></i>전체 장표 인쇄 / PDF</button>
             </div>
         </div>
     </div>
@@ -233,7 +237,6 @@
             rows.forEach((r, index) => {
                 totalQty += r.qty;
 
-                // 1. N+1 계산
                 let bonusQty = 0;
                 if (r.promo !== '0') {
                     const parts = r.promo.split('+');
@@ -244,7 +247,6 @@
                 const billingQty = r.qty - bonusQty;
                 const normalCalc = r.orig * billingQty;
 
-                // 2. MD신가 계산 (MD신가 적용 시 1원 단위 절삭)
                 let mdUnitPrice = r.orig;
                 if (r.mdDiscRate > 0) {
                     mdUnitPrice = floorTo10(r.orig * (1 - r.mdDiscRate / 100));
@@ -252,7 +254,6 @@
                     mdUnitPrice = Math.max(0, r.orig - r.mdCash);
                 }
 
-                // 3. 행사카드 할인 계산
                 let cardUnitPrice = mdUnitPrice;
                 if (r.useCard) {
                     if (r.cardDiscRate > 0) {
@@ -262,7 +263,6 @@
                     }
                 }
 
-                // 4. L.POINT 할인 계산
                 let lpUnitPrice = cardUnitPrice;
                 if (r.useLp) {
                     if (r.lpDiscRate > 0) {
@@ -273,22 +273,18 @@
                 }
 
                 const finalAppliedUnitPrice = (r.useCard || r.useLp) ? Math.round(lpUnitPrice) : floorTo10(lpUnitPrice);
-
-                // 5. 기본 고객 결제액 산출 (1원 단위 절삭)
                 let itemPayment = floorTo10(lpUnitPrice * billingQty);
 
                 if (r.isVoucherTarget) {
                     voucherTargetTotal += itemPayment;
                 }
 
-                // 즉시 할인 적용 여부에 따른 개별 상품 최종 결제액 및 개당 단가 산정
                 let itemNetPayment = itemPayment;
                 if (r.voucherMode === 'instant' && r.voucherAmt > 0) {
                     itemNetPayment = floorTo10(Math.max(0, itemPayment - r.voucherAmt));
                 }
                 totalFinalPaymentSum += itemNetPayment;
 
-                // 상품권 수령 모드일 때만 예상 상품권 합계에 반영
                 if (r.voucherMode === 'voucher' && r.voucherAmt > 0) {
                     totalVoucherSum += r.voucherAmt;
                 }
@@ -307,7 +303,6 @@
                         <button onclick="deleteRow(${index})" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-trash-can text-xs"></i></button>
                     </div>
 
-                    <!-- 기본 입력: 정상가 / 실계산수량 / N+1 -->
                     <div class="grid grid-cols-3 gap-2 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                         <div>
                             <span class="text-slate-400 block text-[10px]">정상매가</span>
@@ -341,7 +336,6 @@
                         </div>
                     </div>
 
-                    <!-- N+1 결과 및 MD신가 -->
                     <div class="grid grid-cols-2 gap-2 text-xs bg-purple-50/50 p-2.5 rounded-xl border border-purple-100">
                         <div>
                             <span class="text-purple-700 block text-[10px] font-bold">덤수량: <b class="text-red-600">${formatComma(bonusQty)}개</b> | 실혜택수량: <b>${formatComma(billingQty)}개</b></span>
@@ -363,7 +357,6 @@
                         </div>
                     </div>
 
-                    <!-- 행사카드 및 L.POINT 분리 할인 -->
                     <div class="space-y-2 text-xs bg-blue-50/50 p-2.5 rounded-xl border border-blue-100">
                         <div class="flex items-center justify-between">
                             <label class="flex items-center space-x-2 font-medium text-slate-700 cursor-pointer">
@@ -400,7 +393,6 @@
                         <div class="text-right text-[11px] font-bold text-blue-900 pt-1">최종적용단가: ${finalAppliedUnitPrice.toLocaleString()}원</div>
                     </div>
 
-                    <!-- 지원물량 및 실수령 수량 -->
                     <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100 items-center">
                         <div>
                             <span class="text-slate-400 block text-[10px]">지원물량 수량 (개)</span>
@@ -415,7 +407,6 @@
                         </div>
                     </div>
 
-                    <!-- 최종 결제액 및 상품권/즉시할인 설정 영역 -->
                     <div class="bg-red-50/70 border border-red-100 p-3 rounded-xl space-y-2.5 text-xs">
                         <div class="flex justify-between items-center">
                             <div>
@@ -503,13 +494,19 @@
             renderApp();
         }
 
-        // 2개 이상의 모든 상품이 각각 A4 1장씩 순서대로 전부 출력되도록 렌더링
+        // 전체 요약 페이지 + 개별 상품 페이지 (한 줄 강제, A4 1장 2개 배치)
         function openPrintModal() {
             const printArea = document.getElementById('print-area');
             if (!printArea) return;
             printArea.innerHTML = '';
 
             const promoText = document.getElementById('promo-period').options[document.getElementById('promo-period').selectedIndex].text;
+
+            let globalOrigSum = 0;
+            let globalGrandSum = 0;
+            let globalVoucherSum = 0;
+            let summaryItemsHTML = '';
+            let individualPagesHTML = '';
 
             rows.forEach((r, i) => {
                 let bonusQty = 0;
@@ -550,67 +547,85 @@
                 const unitPricePerItem = totalReceiveQty > 0 ? Math.round(itemNet / totalReceiveQty) : 0;
                 const totalDisc = (r.orig * r.qty) - itemNet;
 
-                // 개별 상품별 A4 1장 전용 카드 생성
-                printArea.innerHTML += `
-                <div class="print-page bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-slate-800 flex flex-col justify-between">
+                globalOrigSum += origAmt;
+                globalGrandSum += itemNet;
+                if (r.voucherMode === 'voucher' && r.voucherAmt > 0) {
+                    globalVoucherSum += r.voucherAmt;
+                }
+
+                summaryItemsHTML += `
+                <div class="flex justify-between border-b border-slate-200 py-2 items-center text-xs">
+                    <div>
+                        <b class="text-slate-800">${i+1}. ${r.name || '상품명 미입력'}</b> 
+                        <span class="text-slate-500 text-[10px] block mt-0.5">총 구매 수량: <b>${formatComma(totalReceiveQty)}개</b> ${r.voucherMode==='instant' && r.voucherAmt>0 ? '<span class="text-red-600">(상품권 즉시할인 적용됨)</span>' : ''}</span>
+                    </div>
+                    <div class="text-right">
+                        <b class="text-slate-900 text-sm">${itemNet.toLocaleString()}원</b>
+                        <span class="text-[10px] text-slate-400 block">개당 ${formatComma(unitPricePerItem)}원</span>
+                    </div>
+                </div>
+                `;
+
+                // 한 줄 표시를 위한 whitespace-nowrap 등 적용, 1장당 2개 출력 위한 .print-page
+                individualPagesHTML += `
+                <div class="print-page bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm text-slate-800 flex flex-col justify-between">
                     <div>
                         <!-- 상단 헤더 -->
-                        <div class="flex justify-between items-start border-b-2 border-[#E60012] pb-3">
-                            <div>
-                                <span class="bg-[#E60012] text-white font-black px-2 py-0.5 rounded text-xs tracking-tight">LOTTE MART</span>
-                                <h2 class="text-xl font-black text-slate-900 mt-1">2026 추석 선물세트 개별 견적서</h2>
-                                <p class="text-xs text-slate-500">롯데마트 서울역점 현장 정산 견적 장표 (상품 ${i+1}/${rows.length})</p>
+                        <div class="flex justify-between items-start border-b-2 border-[#E60012] pb-2.5">
+                            <div class="shrink-0 flex flex-col">
+                                <span class="bg-[#E60012] text-white font-black px-1.5 py-0.5 rounded text-[10px] tracking-tight w-max">LOTTE MART</span>
+                                <h2 class="text-[12px] sm:text-sm font-black text-slate-900 mt-1 whitespace-nowrap tracking-tighter">2026 추석 선물세트 개별 견적서</h2>
+                                <p class="text-[9px] sm:text-[10px] text-slate-500">롯데마트 서울역점 현장 정산 견적 장표 (품목 ${i+1}/${rows.length})</p>
                             </div>
-                            <div class="text-right text-xs">
-                                <span class="bg-slate-100 text-slate-700 px-2 py-1 rounded font-bold border border-slate-200">${promoText.split(' - ')[0]}</span>
-                                <p class="text-[11px] text-slate-400 mt-1">출력일자: ${new Date().toLocaleDateString('ko-KR')}</p>
+                            <div class="text-right shrink-0 pl-1">
+                                <span class="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-bold border border-slate-200 text-[9px] sm:text-[10px] whitespace-nowrap tracking-tighter block w-max ml-auto">${promoText.split(' - ')[0]}</span>
+                                <p class="text-[9px] text-slate-400 mt-1 whitespace-nowrap">${new Date().toLocaleDateString('ko-KR')}</p>
                             </div>
                         </div>
 
                         <!-- 상품 기본 정보 -->
-                        <div class="bg-slate-50 rounded-xl p-3.5 mt-3 border border-slate-200">
-                            <span class="text-[11px] font-bold text-[#E60012] block">견적 대상 상품 (${i+1}번 품목)</span>
-                            <div class="flex justify-between items-center mt-0.5">
-                                <h3 class="text-lg font-black text-slate-900">${r.name || '상품명 미입력'}</h3>
-                                <span class="text-xs font-bold text-slate-600">정상매가: <b>${formatComma(r.orig)}원</b></span>
+                        <div class="bg-slate-50 rounded-lg p-2.5 mt-2.5 border border-slate-200">
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-sm font-black text-slate-900">${i+1}. ${r.name || '상품명 미입력'}</h3>
+                                <span class="text-[10px] font-bold text-slate-600">정상매가: <b>${formatComma(r.orig)}원</b></span>
                             </div>
                         </div>
 
                         <!-- 상세 산출 내역 표 -->
-                        <div class="mt-4 space-y-2">
-                            <h4 class="font-bold text-xs text-slate-700 border-l-4 border-red-600 pl-2">세부 프로모션 및 단가 산출 장표</h4>
-                            <table class="w-full text-xs text-left border-collapse border border-slate-200">
+                        <div class="mt-3">
+                            <h4 class="font-bold text-[11px] text-slate-700 border-l-4 border-red-600 pl-2 mb-1.5">세부 프로모션 및 단가 산출</h4>
+                            <table class="w-full text-[10px] sm:text-[11px] text-left border-collapse border border-slate-200">
                                 <tbody>
                                     <tr class="border-b border-slate-200 bg-slate-50/50">
-                                        <th class="p-2 border-r border-slate-200 text-slate-600 w-1/3">주문 수량 / 프로모션</th>
-                                        <td class="p-2 font-medium">주문: <b>${formatComma(r.qty)}개</b> (${r.promo !== '0' ? r.promo + ' 적용' : '덤 없음'})</td>
+                                        <th class="py-1.5 px-2 border-r border-slate-200 text-slate-600 w-1/3">주문수량/프로모션</th>
+                                        <td class="py-1.5 px-2 font-medium">주문: <b>${formatComma(r.qty)}개</b> (${r.promo !== '0' ? r.promo + ' 적용' : '덤 없음'})</td>
                                     </tr>
                                     <tr class="border-b border-slate-200">
-                                        <th class="p-2 border-r border-slate-200 text-slate-600">덤 증정 / 실계산 수량</th>
-                                        <td class="p-2 font-medium">덤: <b class="text-red-600">${formatComma(bonusQty)}개</b> | 실계산: <b>${formatComma(billingQty)}개</b></td>
+                                        <th class="py-1.5 px-2 border-r border-slate-200 text-slate-600">덤/실계산 수량</th>
+                                        <td class="py-1.5 px-2 font-medium">덤: <b class="text-red-600">${formatComma(bonusQty)}개</b> | 실계산: <b>${formatComma(billingQty)}개</b></td>
                                     </tr>
                                     <tr class="border-b border-slate-200 bg-slate-50/50">
-                                        <th class="p-2 border-r border-slate-200 text-slate-600">지원 물량 / 총 실수령 수량</th>
-                                        <td class="p-2 font-bold text-indigo-900">지원: ${formatComma(r.supportQty)}개 ➔ 총 실수령: ${formatComma(totalReceiveQty)}개</td>
+                                        <th class="py-1.5 px-2 border-r border-slate-200 text-slate-600">지원/실수령 수량</th>
+                                        <td class="py-1.5 px-2 font-bold text-indigo-900">지원: ${formatComma(r.supportQty)}개 ➔ 총 실수령: ${formatComma(totalReceiveQty)}개</td>
                                     </tr>
                                     <tr class="border-b border-slate-200">
-                                        <th class="p-2 border-r border-slate-200 text-slate-600">MD 신가 적용 단가</th>
-                                        <td class="p-2 font-medium">${r.mdDiscRate > 0 ? r.mdDiscRate + '% 할인' : (r.mdCash > 0 ? formatComma(r.mdCash) + '원 할인' : '미적용')} ➔ <b class="text-purple-900">${formatComma(mdUnitPrice)}원</b></td>
+                                        <th class="py-1.5 px-2 border-r border-slate-200 text-slate-600">MD신가 단가</th>
+                                        <td class="py-1.5 px-2 font-medium">${r.mdDiscRate > 0 ? r.mdDiscRate + '% 할인' : (r.mdCash > 0 ? formatComma(r.mdCash) + '원 할인' : '미적용')} ➔ <b class="text-purple-900">${formatComma(mdUnitPrice)}원</b></td>
                                     </tr>
                                     <tr class="border-b border-slate-200 bg-slate-50/50">
-                                        <th class="p-2 border-r border-slate-200 text-slate-600">행사카드 / L.POINT 할인</th>
-                                        <td class="p-2 font-medium">
+                                        <th class="py-1.5 px-2 border-r border-slate-200 text-slate-600">제휴/L.POINT</th>
+                                        <td class="py-1.5 px-2 font-medium">
                                             카드: ${r.useCard ? (r.cardDiscRate > 0 ? r.cardDiscRate + '%' : formatComma(r.cardCash) + '원') : '미적용'} | 
                                             L.POINT: ${r.useLp ? (r.lpDiscRate > 0 ? r.lpDiscRate + '%' : formatComma(r.lpCash) + '원') : '미적용'}
                                         </td>
                                     </tr>
                                     <tr class="border-b border-slate-200">
-                                        <th class="p-2 border-r border-slate-200 text-slate-600 font-bold bg-red-50/30">최종 적용 기준 단가</th>
-                                        <td class="p-2 font-black text-slate-900 bg-red-50/30">${formatComma(finalAppliedUnitPrice)}원</td>
+                                        <th class="py-1.5 px-2 border-r border-slate-200 text-slate-600 font-bold bg-red-50/30">최종 기준 단가</th>
+                                        <td class="py-1.5 px-2 font-black text-slate-900 bg-red-50/30">${formatComma(finalAppliedUnitPrice)}원</td>
                                     </tr>
                                     <tr class="border-b border-slate-200 bg-slate-50/50">
-                                        <th class="p-2 border-r border-slate-200 text-slate-600">상품권 혜택 구분</th>
-                                        <td class="p-2 font-bold">
+                                        <th class="py-1.5 px-2 border-r border-slate-200 text-slate-600">상품권 혜택 구분</th>
+                                        <td class="py-1.5 px-2 font-bold">
                                             ${r.voucherAmt > 0 
                                                 ? (r.voucherMode === 'instant' ? '<span class="text-red-700">상품권 즉시할인 (' + formatComma(r.voucherAmt) + '원 차감)</span>' : '<span class="text-amber-700">상품권 지류 수령 (' + formatComma(r.voucherAmt) + '원)</span>') 
                                                 : '해당 없음'}
@@ -621,39 +636,71 @@
                         </div>
 
                         <!-- 정산 요약 박스 -->
-                        <div class="bg-slate-900 text-white rounded-xl p-4 space-y-2 mt-4">
-                            <div class="flex justify-between text-xs text-slate-300">
+                        <div class="bg-slate-900 text-white rounded-lg p-3 space-y-1.5 mt-3 shadow-md">
+                            <div class="flex justify-between text-[10px] text-slate-300">
                                 <span>정상 총액 (정상가 × 주문수량):</span>
                                 <span>${formatComma(r.orig * r.qty)}원</span>
                             </div>
-                            <div class="flex justify-between text-xs text-red-400">
+                            <div class="flex justify-between text-[10px] text-red-400">
                                 <span>총 에누리 및 할인 차감액:</span>
                                 <span>-${formatComma(totalDisc)}원</span>
                             </div>
                             ${r.voucherMode === 'voucher' && r.voucherAmt > 0 ? `
-                            <div class="flex justify-between text-xs text-yellow-400">
+                            <div class="flex justify-between text-[10px] text-yellow-400">
                                 <span>증정 예상 상품권:</span>
                                 <span>${formatComma(r.voucherAmt)}원</span>
                             </div>
                             ` : ''}
-                            <div class="border-t border-slate-700 pt-2 flex justify-between items-center">
+                            <div class="border-t border-slate-700 pt-2 mt-1.5 flex justify-between items-center">
                                 <div>
-                                    <span class="text-sm font-bold text-white block">최종 고객 결제 총액</span>
-                                    <span class="text-[11px] text-emerald-400 font-medium">개당 실부담단가(실수령 기준): <b>${formatComma(unitPricePerItem)}원</b></span>
+                                    <span class="text-xs font-bold text-white block">최종 고객 결제 총액</span>
+                                    <span class="text-[9px] text-emerald-400 font-medium">실수령 기준 단가: <b>${formatComma(unitPricePerItem)}원</b></span>
                                 </div>
-                                <span class="text-xl font-black text-emerald-400">${formatComma(itemNet)}원</span>
+                                <span class="text-lg font-black text-emerald-400">${formatComma(itemNet)}원</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 하단 안내 푸터 (수정 반영) -->
-                    <div class="border-t border-slate-200 pt-3 mt-4 flex justify-between items-center text-[10px] text-slate-400">
+                    <!-- 하단 서명 푸터 -->
+                    <div class="border-t border-slate-200 pt-2 mt-3 flex justify-between items-center text-[9px] sm:text-[10px] text-slate-400">
                         <span>* 본 견적서는 롯데마트 서울역점 비공식 상담용 견적서입니다.</span>
                         <span class="font-bold text-slate-600">롯데마트 서울역점</span>
                     </div>
                 </div>
                 `;
             });
+
+            const globalDiscSum = globalOrigSum - globalGrandSum;
+
+            // 전체 요약 페이지
+            const summaryPageHTML = `
+                <div class="summary-page bg-white p-5 rounded-2xl border border-slate-200 shadow-sm text-slate-800">
+                    <div class="text-center border-b-2 border-[#E60012] pb-4 mb-4">
+                        <h3 class="text-xl font-black underline underline-offset-4 decoration-2 decoration-red-200 text-slate-900">2026 추석 선물세트 전체 견적 요약</h3>
+                        <p class="text-xs text-slate-500 mt-2">롯데마트 서울역점 비공식 상담용 견적서</p>
+                        <p class="text-[10px] text-slate-400 mt-1">출력일자: ${new Date().toLocaleDateString('ko-KR')}</p>
+                    </div>
+                    
+                    <div class="space-y-1 mb-6">
+                        ${summaryItemsHTML}
+                    </div>
+
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm space-y-3 font-bold">
+                        <div class="flex justify-between"><span>정상매가 총액:</span> <span class="font-normal">${globalOrigSum.toLocaleString()}원</span></div>
+                        <div class="flex justify-between text-red-600"><span>총 할인액:</span> <span>-${globalDiscSum.toLocaleString()}원</span></div>
+                        ${globalVoucherSum > 0 ? `
+                        <div class="flex justify-between text-yellow-700"><span>증정예상 상품권:</span> <span>${globalVoucherSum.toLocaleString()}원</span></div>
+                        ` : ''}
+                        <div class="flex justify-between text-lg pt-3 border-t border-slate-300 text-emerald-700 mt-2">
+                            <span>최종 고객 결제 총액:</span> 
+                            <span class="font-black">${globalGrandSum.toLocaleString()}원</span>
+                        </div>
+                    </div>
+                    <div class="text-right text-[10px] text-slate-400 mt-4 font-medium">롯데마트 서울역점</div>
+                </div>
+            `;
+
+            printArea.innerHTML = summaryPageHTML + individualPagesHTML;
 
             const printModal = document.getElementById('print-modal');
             if (printModal) printModal.classList.remove('hidden');
